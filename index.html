@@ -1,0 +1,25 @@
+<input type="number" id="valor" placeholder="Digite o valor">
+<button onclick="calcularDesconto()">Calcular</button>
+
+<div id="resultado"></div>
+
+<script>
+function calcularDesconto() {
+    let valorCompra = parseFloat(document.getElementById("valor").value);
+    
+    if (isNaN(valorCompra) || valorCompra < 0) {
+        document.getElementById("resultado").innerText = "Digite um valor válido.";
+        return;
+    }
+
+    let percentualDesconto = valorCompra > 500 ? 0.10 : (valorCompra > 100 ? 0.05 : 0);
+    let valorDesconto = valorCompra * percentualDesconto;
+    let valorComDesconto = valorCompra - valorDesconto;
+
+    document.getElementById("resultado").innerHTML = `
+        <p>- Valor da compra: R$ ${valorCompra.toFixed(2)}</p>
+        <p>- Valor do desconto: R$ ${valorDesconto.toFixed(2)}</p>
+        <p>- Valor da compra com desconto: R$ ${valorComDesconto.toFixed(2)}</p>
+    `;
+}
+</script>
