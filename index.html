@@ -12,7 +12,7 @@ function calcularDesconto() {
         return;
     }
 
-    let percentualDesconto = valorCompra > 500 ? 0.10 : (valorCompra > 100 ? 0.05 : 0);
+    let percentualDesconto = valorCompra > 500 ? 0.10 : (valorCompra >= 100 ? 0.05 : 0);
     let valorDesconto = valorCompra * percentualDesconto;
     let valorComDesconto = valorCompra - valorDesconto;
 
