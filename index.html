@@ -1,25 +1,195 @@
-<input type="number" id="valor" placeholder="Digite o valor">
-<button onclick="calcularDesconto()">Calcular</button>
-
-<div id="resultado"></div>
-
-<script>
-function calcularDesconto() {
-    let valorCompra = parseFloat(document.getElementById("valor").value);
-    
-    if (isNaN(valorCompra) || valorCompra < 0) {
-        document.getElementById("resultado").innerText = "Digite um valor válido.";
-        return;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calculadora de desconto</title>
+  <style>
+    :root {
+      --fundo: #eef2f6;
+      --cartao: #ffffff;
+      --texto: #14213d;
+      --suave: #5b6b82;
+      --linha: #d5dde7;
+      --destaque: #0b6e4f;
+      --erro: #b3261e;
     }
 
-    let percentualDesconto = valorCompra > 500 ? 0.10 : (valorCompra >= 100 ? 0.05 : 0);
-    let valorDesconto = valorCompra * percentualDesconto;
-    let valorComDesconto = valorCompra - valorDesconto;
+    * { box-sizing: border-box; }
 
-    document.getElementById("resultado").innerHTML = `
-        <p>- Valor da compra: R$ ${valorCompra.toFixed(2)}</p>
-        <p>- Valor do desconto: R$ ${valorDesconto.toFixed(2)}</p>
-        <p>- Valor da compra com desconto: R$ ${valorComDesconto.toFixed(2)}</p>
-    `;
-}
-</script>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+      background: var(--fundo);
+      color: var(--texto);
+      font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    }
+
+    main {
+      width: 100%;
+      max-width: 26rem;
+      background: var(--cartao);
+      border: 1px solid var(--linha);
+      border-radius: 12px;
+      padding: 1.75rem;
+    }
+
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.4rem;
+    }
+
+    .regras {
+      margin: 0 0 1.5rem;
+      color: var(--suave);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+
+    .campo {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      padding: 0.7rem 0.8rem;
+      border: 1px solid var(--linha);
+      border-radius: 8px;
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      padding: 0.7rem 1rem;
+      border: 0;
+      border-radius: 8px;
+      background: var(--texto);
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover { background: #22345f; }
+
+    input:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--destaque);
+      outline-offset: 2px;
+    }
+
+    .erro {
+      min-height: 1.25rem;
+      margin: 0.6rem 0 0;
+      color: var(--erro);
+      font-size: 0.9rem;
+    }
+
+    dl {
+      margin: 1.25rem 0 0;
+      border-top: 1px solid var(--linha);
+    }
+
+    .linha {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--linha);
+    }
+
+    dt { color: var(--suave); }
+    dd { margin: 0; font-weight: 600; }
+
+    .total dt { color: var(--texto); font-weight: 600; }
+    .total dd { color: var(--destaque); font-size: 1.25rem; }
+
+    [hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Calculadora de desconto</h1>
+    <p class="regras">
+      Compras a partir de R$ 100,00 ganham 5% de desconto.
+      Compras a partir de R$ 500,00 ganham 10%.
+    </p>
+
+    <label for="valor">Valor da compra (R$)</label>
+    <div class="campo">
+      <input id="valor" type="text" inputmode="decimal" placeholder="Ex.: 250,00" autocomplete="off">
+      <button id="calcular" type="button">Calcular</button>
+    </div>
+    <p class="erro" id="erro" role="alert"></p>
+
+    <dl id="resultado" hidden>
+      <div class="linha">
+        <dt>Valor da compra</dt>
+        <dd id="r-compra"></dd>
+      </div>
+      <div class="linha">
+        <dt>Valor do desconto</dt>
+        <dd id="r-desconto"></dd>
+      </div>
+      <div class="linha total">
+        <dt>Valor com desconto</dt>
+        <dd id="r-total"></dd>
+      </div>
+    </dl>
+  </main>
+
+  <script>
+    const campoValor = document.getElementById("valor");
+    const botao = document.getElementById("calcular");
+    const erro = document.getElementById("erro");
+    const resultado = document.getElementById("resultado");
+
+    const moeda = (n) =>
+      n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+    function calcular() {
+      // Aceita vírgula ou ponto como separador decimal
+      const valorCompra = parseFloat(campoValor.value.trim().replace(",", "."));
+
+      if (isNaN(valorCompra) || valorCompra < 0) {
+        erro.textContent = "Digite um valor numérico válido, como 250,00.";
+        resultado.hidden = true;
+        return;
+      }
+
+      erro.textContent = "";
+
+      // Regras de desconto
+      let percentual = 0;
+      if (valorCompra >= 500) {
+        percentual = 0.10;   // 10%
+      } else if (valorCompra >= 100) {
+        percentual = 0.05;   // 5%
+      }
+
+      const valorDesconto = valorCompra * percentual;
+      const valorComDesconto = valorCompra - valorDesconto;
+
+      document.getElementById("r-compra").textContent = moeda(valorCompra);
+      document.getElementById("r-desconto").textContent = moeda(valorDesconto);
+      document.getElementById("r-total").textContent = moeda(valorComDesconto);
+      resultado.hidden = false;
+    }
+
+    botao.addEventListener("click", calcular);
+    campoValor.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") calcular();
+    });
+  </script>
+</body>
+</html>
